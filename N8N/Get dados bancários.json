@@ -1,0 +1,559 @@
+{
+  "name": "Get dados bancários",
+  "nodes": [
+    {
+      "parameters": {
+        "fieldToSplitOut": "results",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        144,
+        0
+      ],
+      "id": "6ccdc983-a75c-4296-af98-1f6ef6898836",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "12K3wDMA-99sOvUOy85vw0xqi-IxaQ_CmZH9IB19_qAY",
+          "mode": "list",
+          "cachedResultName": "GastosTempoReal",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12K3wDMA-99sOvUOy85vw0xqi-IxaQ_CmZH9IB19_qAY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12K3wDMA-99sOvUOy85vw0xqi-IxaQ_CmZH9IB19_qAY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Data": "={{ $json.Data }}",
+            "Categoria": "={{ $json.Categoria }}",
+            "ID": "={{ $json.ID }}",
+            "Descrição": "={{ $json['Descrição'] }}",
+            "Valor": "={{ $json.Valor }}",
+            "Tipo": "={{ $json.Tipo }}"
+          },
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": [
+            {
+              "id": "Indicador",
+              "displayName": "Indicador",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Saldo atual",
+              "displayName": "Saldo atual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Data",
+              "displayName": "Data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Descrição",
+              "displayName": "Descrição",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Valor",
+              "displayName": "Valor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Categoria",
+              "displayName": "Categoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Tipo",
+              "displayName": "Tipo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        432,
+        0
+      ],
+      "id": "e561a6bf-e5ca-4ecf-a92c-0025a51e8510",
+      "name": "Insere transações"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.pluggy.ai/auth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "clientId",
+              "value": "dc5d5bd9-a472-4c77-8e77-8fbb31da6e80"
+            },
+            {
+              "name": "clientSecret",
+              "value": "354feb32-6ced-462d-a3fe-3405c8913c6c"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -576,
+        96
+      ],
+      "id": "12b941bf-edd2-4bd7-b7d7-6e79e5997fca",
+      "name": "HTTP login pluggy"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.pluggy.ai/transactions?accountId=8b956620-d44d-4054-9e78-4a86897d0006&from={{ $now.minus({ days: 30 }).format('yyyy-MM-dd') }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "={{ $('HTTP login pluggy').item.json.apiKey }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4a5e5868-5d22-4734-8b19-d520ceae02ce",
+      "name": "HTTP call transactions"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2a42022a-cc88-482a-9340-be19d6672102",
+              "name": "Data",
+              "value": "={{ DateTime.fromISO($json.date).toFormat('dd/MM/yyyy - HH:mm') }}",
+              "type": "string"
+            },
+            {
+              "id": "77a25950-e6f5-40aa-bf46-07599b6def14",
+              "name": "Descrição",
+              "value": "={{ $json.description }}",
+              "type": "string"
+            },
+            {
+              "id": "1d9c1b20-52ce-456b-8f44-28891fdd85c4",
+              "name": "Valor",
+              "value": "={{ $json.amount }}",
+              "type": "number"
+            },
+            {
+              "id": "453bf6e3-109e-4720-aa2c-f8151fb675c1",
+              "name": "Categoria",
+              "value": "={{ $json.category }}",
+              "type": "string"
+            },
+            {
+              "id": "67a0f1fe-2379-40e5-b4a7-8184cf5ec91d",
+              "name": "Tipo",
+              "value": "={{ $json.operationType }}",
+              "type": "string"
+            },
+            {
+              "id": "02deced7-ba8e-4995-9c96-4d11cbd24719",
+              "name": "ID",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        288,
+        0
+      ],
+      "id": "f2e5af38-4d6d-4e5c-83aa-dfb070a93d99",
+      "name": "Filtra info"
+    },
+    {
+      "parameters": {
+        "url": "https://api.pluggy.ai/accounts/8b956620-d44d-4054-9e78-4a86897d0006",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "={{ $('HTTP login pluggy').item.json.apiKey }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        0,
+        176
+      ],
+      "id": "a341b526-604c-46e1-b006-7d6cd1715a9c",
+      "name": "HTTP call account info"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "12K3wDMA-99sOvUOy85vw0xqi-IxaQ_CmZH9IB19_qAY",
+          "mode": "list",
+          "cachedResultName": "GastosTempoReal",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12K3wDMA-99sOvUOy85vw0xqi-IxaQ_CmZH9IB19_qAY/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Página1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/12K3wDMA-99sOvUOy85vw0xqi-IxaQ_CmZH9IB19_qAY/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Indicador": "SALDO_FIXO",
+            "Saldo atual": "={{ $json.balance }}"
+          },
+          "matchingColumns": [
+            "Indicador"
+          ],
+          "schema": [
+            {
+              "id": "Indicador",
+              "displayName": "Indicador",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Saldo atual",
+              "displayName": "Saldo atual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Data",
+              "displayName": "Data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Descrição",
+              "displayName": "Descrição",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Valor",
+              "displayName": "Valor",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Categoria",
+              "displayName": "Categoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Tipo",
+              "displayName": "Tipo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        432,
+        176
+      ],
+      "id": "7d3cb989-e4d1-44e2-ba90-bf495832b87d",
+      "name": "Atualiza saldo"
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -240,
+        96
+      ],
+      "id": "1eb1cf1c-d3dc-4160-a095-150e584f27cf",
+      "name": "Wait",
+      "webhookId": "6e7c2c7f-24ef-4f38-b6fa-d181ef1b8767"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://api.pluggy.ai/items/74dd5e73-ef0d-45fc-9f5c-35c425c86b17",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "={{ $json.apiKey }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -400,
+        96
+      ],
+      "id": "b40f4e59-b4e5-45c7-ada0-3038ae87da12",
+      "name": "HTTP atualiza conta pluggy"
+    },
+    {
+      "parameters": {
+        "path": "c46f02f4-d1d8-4bfd-bc19-3dae4e3ad28b",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -768,
+        96
+      ],
+      "id": "98ecc701-cdc7-4b92-8559-b885ba059345",
+      "name": "Webhook",
+      "webhookId": "c46f02f4-d1d8-4bfd-bc19-3dae4e3ad28b"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Filtra info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP login pluggy": {
+      "main": [
+        [
+          {
+            "node": "HTTP atualiza conta pluggy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP call transactions": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtra info": {
+      "main": [
+        [
+          {
+            "node": "Insere transações",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP call account info": {
+      "main": [
+        [
+          {
+            "node": "Atualiza saldo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP atualiza conta pluggy": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP call transactions",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP call account info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP login pluggy",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "15400e33-9bcd-4d96-a49a-484ddf8722cf",
+  "meta": {
+    "instanceId": "f811193f9a2539d392238b730e2b4ecc99f492529ee7ba184c902d01a3b89889"
+  },
+  "id": "8XZWizaZ7c4dW2h5",
+  "tags": []
+}
