@@ -52,7 +52,7 @@ Sistema completo de controle financeiro pessoal que integra dados bancários rea
 
 O fluxo é responsável por buscar os dados bancários via API, tratá-los e gravá-los no Google Sheets automaticamente.
 
-![Fluxo N8N](assets/fluxo_N8N.png)
+![Fluxo_N8N](assets/fluxo_N8N.png)
 
 ### Nós do fluxo (da esquerda para direita)
 
