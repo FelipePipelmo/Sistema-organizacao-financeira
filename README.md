@@ -74,6 +74,11 @@ O fluxo é responsável por buscar os dados bancários via API, tratar as inform
 | **HTTP call account info**     | HTTP Request — GET   | Busca as informações da conta e o saldo atual           |
 | **Atualiza saldo**             | Google Sheets        | Atualiza o saldo na planilha                            |
 
+### Fluxo
+
+![Fluxo N8N](assets/fluxo_N8N.png)
+---
+
 ### Como importar o fluxo
 
 1. Acesse sua instância do N8N
