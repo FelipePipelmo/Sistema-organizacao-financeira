@@ -146,6 +146,11 @@ Bot de terminal em Python para controle de dívidas, divisões financeiras e pen
 * Banco local SQLite gerado automaticamente
 * Integração com Google Sheets via `gspread`
 
+### Preview do Bot de Pendências
+
+![Bot CLI de dívidas](assets/preview_bot_pendencias.png)
+---
+
 ### Instalação
 
 ```bash
