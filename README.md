@@ -6,30 +6,31 @@ Sistema completo de controle financeiro pessoal que integra dados bancários rea
 
 ## 🗂️ Estrutura do Repositório
 
-```
+```bash
 ├── N8N/
-│   └── Get dados bancários.json          # Fluxo N8N exportado (importar direto na plataforma)
+│   └── Get dados bancários.json          # Fluxo N8N exportado
 │
 ├── Scriptable/
 │   ├── Saldo.js                          # Widget de saldo atual da conta
 │   ├── Transações.js                     # Widget com últimas transações
-│   └── Meta mensal.js                    # Widget de acompanhamento de meta mensal
+│   ├── Meta mensal.js                    # Widget de acompanhamento da meta mensal
+│   └── Pendências.js                     # Widget de resumo das pendências entre pessoas
 │
 ├── bot pendencias/
 │   ├── bot_pendencias.py                 # Bot CLI de controle de dívidas entre pessoas
-│   ├── credentials.json                  # Credenciais da Service Account (não versionado)
-│   └── pendencias.db                     # Banco de dados local SQLite (gerado automaticamente)
+│   ├── credentials.json                  # Credenciais da Service Account — não versionar
+│   └── pendencias.db                     # Banco SQLite gerado automaticamente
 │
 └── assets/
     ├── fluxo_N8N.png                     # Print do fluxo N8N
-    └── Resultado_Widgets.jpeg            # Preview dos widgets no iPhone
+    └── Resultado_Widgets.gif             # GIF demonstrando os 4 widgets no iPhone
 ```
 
 ---
 
 ## 🏗️ Arquitetura do Sistema
 
-```
+```text
 Banco (Pluggy API)
       │
       ▼
@@ -48,89 +49,102 @@ Banco (Pluggy API)
                                                    (iOS / iPhone)
                                                      ├─ Saldo
                                                      ├─ Transações
-                                                     └─ Meta Mensal
+                                                     ├─ Meta Mensal
+                                                     └─ Pendências
 ```
 
 ---
 
 ## ⚙️ Parte 1 — Fluxo N8N
 
-O fluxo é responsável por buscar os dados bancários via API, tratá-los e gravá-los no Google Sheets automaticamente.
+O fluxo é responsável por buscar os dados bancários via API, tratar as informações e gravá-las automaticamente no Google Sheets.
 
-![Fluxo_N8N](assets/fluxo_N8N.png)
+### Nós do fluxo
 
-### Nós do fluxo (da esquerda para direita)
-
-| Nó | Tipo | Descrição |
-|---|---|---|
-| **Webhook** | Trigger | Dispara o fluxo via requisição GET externa |
-| **HTTP login pluggy** | HTTP Request (POST) | Autentica na API Pluggy e obtém token de acesso |
-| **HTTP atualiza conta pluggy** | HTTP Request (PATCH) | Atualiza/sincroniza os dados da conta no Pluggy |
-| **Wait** | Espera | Aguarda a sincronização ser concluída antes de prosseguir |
-| **HTTP call transactions** | HTTP Request (GET) | Busca o histórico de transações da conta |
-| **Split Out** | Transformação | Separa o array de transações em itens individuais |
-| **Filtra info** | Code (manual) | Filtra e formata os campos relevantes de cada transação |
-| **Insere transações** | Google Sheets | Insere ou atualiza as transações na aba correta (appendOrUpdate) |
-| **HTTP call account info** | HTTP Request (GET) | Busca informações e saldo atual da conta |
-| **Atualiza saldo** | Google Sheets | Atualiza a célula de saldo na planilha (update) |
+| Nó                             | Tipo                 | Descrição                                               |
+| ------------------------------ | -------------------- | ------------------------------------------------------- |
+| **Webhook**                    | Trigger              | Dispara o fluxo via requisição GET externa              |
+| **HTTP login pluggy**          | HTTP Request — POST  | Autentica na API Pluggy e obtém token de acesso         |
+| **HTTP atualiza conta pluggy** | HTTP Request — PATCH | Atualiza e sincroniza os dados da conta no Pluggy       |
+| **Wait**                       | Espera               | Aguarda a sincronização antes de continuar              |
+| **HTTP call transactions**     | HTTP Request — GET   | Busca o histórico de transações da conta                |
+| **Split Out**                  | Transformação        | Separa o array de transações em itens individuais       |
+| **Filtra info**                | Code                 | Filtra e formata os campos relevantes de cada transação |
+| **Insere transações**          | Google Sheets        | Insere ou atualiza as transações na planilha            |
+| **HTTP call account info**     | HTTP Request — GET   | Busca as informações da conta e o saldo atual           |
+| **Atualiza saldo**             | Google Sheets        | Atualiza o saldo na planilha                            |
 
 ### Como importar o fluxo
 
 1. Acesse sua instância do N8N
 2. Vá em **Workflows → Import from file**
 3. Selecione o arquivo `N8N/Get dados bancários.json`
-4. Configure as credenciais da Pluggy API e do Google Sheets nas etapas correspondentes
+4. Configure as credenciais da Pluggy API e do Google Sheets nos nós correspondentes
 5. Ative o webhook e copie a URL gerada
 
 ### Pré-requisitos N8N
 
-- Conta na [Pluggy](https://pluggy.ai/) com uma conexão bancária ativa
-- Google Sheets com as abas de transações e saldo configuradas
-- Instância N8N (self-hosted ou cloud)
+* Conta na [Pluggy](https://pluggy.ai/) com conexão bancária ativa
+* Google Sheets configurado com as abas usadas pelo sistema
+* Instância N8N, self-hosted ou cloud
+* Credenciais da Pluggy e do Google Sheets configuradas no N8N
 
 ---
 
-## 📱 Parte 2 — Widgets Scriptable (iOS)
+## 📱 Parte 2 — Widgets Scriptable
 
-Os widgets são scripts JavaScript executados pelo app [Scriptable](https://scriptable.app/) no iPhone. Eles leem os dados diretamente do Google Sheets e exibem as informações na tela inicial.
+Os widgets são scripts JavaScript executados pelo app [Scriptable](https://scriptable.app/) no iPhone. Eles leem os dados do Google Sheets e exibem informações financeiras diretamente na tela inicial do iOS.
 
 ### Widgets disponíveis
 
 #### `Saldo.js`
-Exibe o saldo atual da conta bancária, entradas e saídas do dia, atualizado a cada execução do fluxo N8N.
+
+Exibe o saldo atual da conta bancária, além das entradas e saídas do dia.
 
 #### `Transações.js`
-Lista as últimas transações registradas, com descrição, data e valor (vermelho para débitos, verde para créditos).
+
+Lista as últimas transações registradas, exibindo descrição, data e valor.
 
 #### `Meta mensal.js`
-Acompanha o progresso em relação a uma meta de gastos definida para o mês, com barra de progresso e percentual utilizado.
+
+Acompanha o progresso em relação à meta de gastos mensal, com percentual utilizado e barra de progresso.
+
+#### `Pendências.js`
+
+Exibe um resumo das pendências financeiras entre pessoas, com base nos dados gerados pelo bot na `Página2` do Google Sheets.
 
 ### Como configurar os widgets
 
 1. Instale o app **Scriptable** na App Store
-2. Copie o conteúdo de cada arquivo `.js` para um novo script dentro do Scriptable
-3. Em cada script, configure a URL da sua planilha Google Sheets publicada (planilha → Arquivo → Publicar na web → CSV)
-4. Adicione o widget desejado na tela inicial do iPhone (pressione e segure → `+` → Scriptable)
-5. Selecione o script correspondente ao widget
+2. Copie o conteúdo de cada arquivo `.js` da pasta `Scriptable/`
+3. Crie um novo script dentro do Scriptable para cada widget
+4. Configure, em cada script, a URL da planilha Google Sheets publicada como CSV
+5. Adicione um widget Scriptable na tela inicial do iPhone
+6. Selecione o script correspondente ao widget desejado
 
-### Preview
+### Preview dos widgets
 
-![Widgets de organização financeira no iPhone](assets/Resultado_Widgets.jpeg)
-
+![Widgets de organização financeira no iPhone](assets/widget_sistema_financeiro.gif)
 ---
 
-## 🤖 Parte 3 — Bot de Pendências (Python CLI)
+## 🤖 Parte 3 — Bot de Pendências
 
-Bot de terminal em Python para controle de dívidas e divisões financeiras entre pessoas. Integra-se ao mesmo Google Sheets do sistema, lendo transações PIX automaticamente e sincronizando o resumo de pendências em uma aba dedicada.
+Bot de terminal em Python para controle de dívidas, divisões financeiras e pendências entre pessoas. Ele se integra ao mesmo Google Sheets usado pelo sistema, lendo transações PIX automaticamente e sincronizando o resumo das pendências em uma aba dedicada.
 
 ### Funcionalidades
 
-- Cadastro de pessoas e registro manual de gastos compartilhados com divisão automática
-- Leitura de transações PIX do Google Sheets — detecta o nome da pessoa pela descrição e pergunta o que fazer com cada transação: abater dívida existente, registrar como novo gasto ou ignorar
-- Cálculo de saldo líquido por pessoa (positivo e negativo se cancelam automaticamente)
-- Sincronização automática do resumo de pendências na `Página2` do Google Sheets após qualquer alteração
-- Revisão semanal automática ao abrir o bot no dia/hora configurados, com listagem detalhada de todas as dívidas e saldo final por pessoa
-- Banco de dados local SQLite — sem dependências externas além do `gspread`
+* Cadastro de pessoas
+* Registro manual de gastos compartilhados
+* Divisão automática de valores
+* Leitura de transações PIX do Google Sheets
+* Detecção do nome da pessoa pela descrição da transação
+* Opções para abater dívida, registrar novo gasto ou ignorar PIX
+* Cálculo de saldo líquido por pessoa
+* Compensação automática entre valores positivos e negativos
+* Sincronização automática do resumo de pendências na `Página2`
+* Revisão semanal automática ao abrir o bot no dia e horário configurados
+* Banco local SQLite gerado automaticamente
+* Integração com Google Sheets via `gspread`
 
 ### Instalação
 
@@ -141,80 +155,110 @@ python3 bot_pendencias.py
 
 ### Configurar acesso ao Google Sheets
 
-O bot usa uma Service Account para ler e escrever na planilha. Para configurar:
+O bot usa uma Service Account para ler e escrever na planilha.
 
-1. Acesse [console.cloud.google.com](https://console.cloud.google.com) e crie um projeto
-2. Ative **Google Sheets API** e **Google Drive API**
-3. Vá em **Credenciais → Criar credenciais → Conta de serviço**
-4. Na conta criada, gere uma chave **JSON** e salve como `credentials.json` na pasta `bot pendencias/`
-5. Abra o `credentials.json`, copie o valor de `"client_email"` e compartilhe sua planilha com esse e-mail como **Editor**
-6. No bot, acesse **Configurações** e cole o ID da planilha (trecho da URL entre `/d/` e `/edit`)
+1. Acesse [console.cloud.google.com](https://console.cloud.google.com)
+2. Crie um projeto
+3. Ative a **Google Sheets API**
+4. Ative a **Google Drive API**
+5. Vá em **Credenciais → Criar credenciais → Conta de serviço**
+6. Gere uma chave JSON
+7. Salve o arquivo como `credentials.json` dentro da pasta `bot pendencias/`
+8. Abra o `credentials.json`
+9. Copie o valor de `"client_email"`
+10. Compartilhe sua planilha com esse e-mail como **Editor**
+11. No bot, acesse **Configurações**
+12. Cole o ID da planilha, que fica na URL entre `/d/` e `/edit`
 
 ### Estrutura do Google Sheets esperada
 
-| Aba | Conteúdo |
-|---|---|
-| `Página 1` | Transações do banco — colunas: Data, Descrição, Valor, Categoria, Tipo, ID |
-| `Página2` | Gerada e mantida pelo bot — resumo de pendências por pessoa (uma linha por pessoa) |
+| Aba        | Conteúdo                                                           |
+| ---------- | ------------------------------------------------------------------ |
+| `Página 1` | Transações do banco — Data, Descrição, Valor, Categoria, Tipo e ID |
+| `Página2`  | Resumo de pendências por pessoa, gerado e mantido pelo bot         |
 
-### Agendamento semanal (cron)
+### Agendamento semanal com cron
 
-Para o bot disparar a revisão automaticamente, agende a execução via cron:
+Para executar a revisão automaticamente, agende a execução do bot via cron:
 
 ```bash
 crontab -e
-# Exemplo: toda segunda-feira às 9h
+```
+
+Exemplo: toda segunda-feira às 9h.
+
+```bash
 0 9 * * 1 python3 "/caminho/completo/bot pendencias/bot_pendencias.py"
 ```
 
-O dia e horário também podem ser alterados diretamente no menu **Configurações** do bot.
+O dia e horário da revisão também podem ser alterados diretamente no menu **Configurações** do bot.
 
 ### Fluxo de uso típico
 
-```
+```text
 Abrir o bot
   └── Painel mostra saldo líquido por pessoa
   └── Aviso se houver PIX novos na planilha
 
 Opção 3 — Processar PIX do Google Sheets
   └── Bot lista cada PIX não processado
-  └── Detecta nome da pessoa pela descrição
-  └── Pergunta: abater dívida / novo gasto / ignorar
-  └── Atualiza Página2 automaticamente
+  └── Detecta o nome da pessoa pela descrição
+  └── Pergunta se deseja abater dívida, registrar novo gasto ou ignorar
+  └── Atualiza a Página2 automaticamente
 
 Opção 2 — Ver detalhes / quitar
   └── Lista todas as transações abertas com IDs
   └── Permite quitar individualmente ou todas de uma vez
-  └── Atualiza Página2 automaticamente
+  └── Atualiza a Página2 automaticamente
 ```
 
 ---
 
 ## 🔗 Tecnologias utilizadas
 
-| Tecnologia | Função |
-|---|---|
-| [N8N](https://n8n.io/) | Orquestração e automação do fluxo de dados |
-| [Pluggy API](https://pluggy.ai/) | Conexão open finance com o banco |
-| [Google Sheets](https://sheets.google.com/) | Banco de dados intermediário e exibição de pendências |
-| [Scriptable](https://scriptable.app/) | Renderização dos widgets no iOS |
-| JavaScript | Lógica dos widgets |
-| Python 3 + SQLite | Bot CLI de controle de pendências |
+| Tecnologia                                  | Função                                     |
+| ------------------------------------------- | ------------------------------------------ |
+| [N8N](https://n8n.io/)                      | Orquestração e automação do fluxo de dados |
+| [Pluggy API](https://pluggy.ai/)            | Conexão Open Finance com o banco           |
+| [Google Sheets](https://sheets.google.com/) | Banco de dados intermediário do sistema    |
+| [Scriptable](https://scriptable.app/)       | Renderização dos widgets no iOS            |
+| JavaScript                                  | Lógica dos widgets Scriptable              |
+| Python 3                                    | Bot CLI de pendências                      |
+| SQLite                                      | Banco local do bot                         |
+| `gspread`                                   | Integração do bot com Google Sheets        |
 
 ---
 
 ## 🔒 Segurança
 
-- As credenciais da Pluggy API e do Google Sheets **não estão incluídas** neste repositório
-- Configure-as diretamente nas credenciais do N8N e nas variáveis dos scripts Scriptable
-- O arquivo `credentials.json` da Service Account deve estar no `.gitignore` — nunca versione esse arquivo
-- Nunca exponha seu `clientId`, `clientSecret` ou tokens de acesso publicamente
+* As credenciais da Pluggy API e do Google Sheets não estão incluídas neste repositório
+* Configure as credenciais da Pluggy diretamente no N8N
+* Configure as URLs das planilhas diretamente nos scripts Scriptable
+* O arquivo `credentials.json` da Service Account deve estar no `.gitignore`
+* O banco `pendencias.db` é gerado localmente e não precisa ser versionado
+* Nunca exponha `clientId`, `clientSecret`, tokens de acesso ou arquivos de credenciais publicamente
+
+### Sugestão de `.gitignore`
+
+```gitignore
+# Credenciais
+credentials.json
+*.env
+
+# Banco local
+pendencias.db
+
+# Arquivos temporários
+__pycache__/
+*.pyc
+.DS_Store
+```
 
 ---
 
 ## 👤 Autor
 
-**Felipe Pipelmo**  
-Estudante de Engenharia de Controle e Automação — focado em Automação de Processos, Engenharia de Dados e Integrações de APIs.
+**Felipe Pipelmo**
+Estudante de Engenharia de Controle e Automação, com foco em Automação de Processos, Engenharia de Dados e Integrações de APIs.
 
 [GitHub](https://github.com/FelipePipelmo)
