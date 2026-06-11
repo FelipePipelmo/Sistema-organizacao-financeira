@@ -24,6 +24,7 @@ Sistema completo de controle financeiro pessoal que integra dados bancários rea
 └── assets/
     ├── fluxo_N8N.png                     # Print do fluxo N8N
     └── Resultado_Widgets.gif             # GIF demonstrando os 4 widgets no iPhone
+    └── preview_bot_pendencias.png        # png demonstrando funcionamento bot CLI
 ```
 
 ---
